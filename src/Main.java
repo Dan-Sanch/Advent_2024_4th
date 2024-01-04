@@ -12,8 +12,10 @@ public class Main {
         String[] inputLines = FileReaderTools.readFileAsArray(fileName);
 
         int cardsTotalScore = getCardsTotalScore(inputLines);
-
         System.out.println("Cards total score: " + cardsTotalScore);
+
+        long totalCardsCount = getTotalCardsCount(inputLines);
+        System.out.println("Total scratchcards won: " + totalCardsCount);
     }
 
     private static int getCardsTotalScore(String[] cardsInputLines) {
@@ -25,12 +27,14 @@ public class Main {
     }
 
     private static int getCardScore(String cardLine) {
+        int winnerCount = getCardWinningCount(cardLine);
+        return winnerCount==0? 0 : (int) Math.pow(2, (winnerCount-1));
+    }
+
+    private static int getCardWinningCount(String cardLine) {
         List<Integer> yourNumbers = parseYourNumbers(cardLine);
         TreeSet<Integer> winningNumbers = parseWinningNumbers(cardLine);
-        Collection<Integer> yourWinningNumbers = getYourWinningNumbers(yourNumbers, winningNumbers);
-
-        int winnerCount = yourWinningNumbers.size();
-        return winnerCount==0? 0 : (int) Math.pow(2, (winnerCount-1));
+        return getYourWinningNumbers(yourNumbers, winningNumbers).size();
     }
 
     private static List<Integer> parseYourNumbers(String cardLine) {
@@ -55,5 +59,27 @@ public class Main {
         return yourNumbers.stream()
                 .filter(winningNumbers::contains)
                 .toList();
+    }
+
+    private static long getTotalCardsCount(String[] cardsInputLines) {
+        int[] winnersByCard = new int[cardsInputLines.length];
+        for (int i=0; i < cardsInputLines.length; i++) {
+            winnersByCard[i] = getCardWinningCount(cardsInputLines[i]);
+        }
+
+        int[] cardCopies = calcCardCopies(winnersByCard);
+        return Arrays.stream(cardCopies).mapToLong(Long::valueOf).sum();
+    }
+
+    private static int[] calcCardCopies(int[] winnersByCard) {
+        int[] cardCopies = new int[winnersByCard.length];
+        Arrays.fill(cardCopies, 1);
+
+        for (int i=0; i<cardCopies.length; i++) {
+            for (int j=i+1; j <= i+winnersByCard[i] && j<cardCopies.length; j++)
+                cardCopies[j] += cardCopies[i];
+        }
+
+        return cardCopies;
     }
 }
